@@ -18,7 +18,7 @@ function App() {
     <div className="map-container w-full h-full">
       {/* MapController is now large and centered */}
       <Routes>
-        <Route index element={<MapController />} />
+        <Route path="*" element={<MapController />} />
       </Routes>
     </div>
   </main>
