@@ -1,16 +1,14 @@
-import React, { act, use, useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { USAMap, StateAbbreviations } from '@mirawision/usa-map-react'
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { supabase } from '../dbClient';
 import SharedSession from './SharedSession';
 
 const MapController = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
-  const [foundStates, setFoundStates] = useState<string[]>([]);
   const [hoveredState, setHoveredState] = useState<string | null>(null);
   const [selectedStates, setSelectedStates] = useState<string[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [error, setError] = useState<string | null>(null);
 
 
   useEffect(() => {
@@ -25,7 +23,7 @@ const MapController = () => {
           .select('state')
           .eq('sessionID', sessionId)
         if (error) {
-          setError("Could not find this game session.");
+          console.error("Could not find this game session.");
         } else if (data) {
           const flatStates = data.map(item => item.state);
           console.log("Found states for session", sessionId, ":", flatStates);
@@ -46,7 +44,7 @@ const MapController = () => {
           filter: `sessionID=eq.${sessionId}` // Critical: Only listen for THIS session
         }, (payload) => {
           // Update local state without a new DB query! 
-          setFoundStates((prev) => [...prev, payload.new.state_code]);
+          setSelectedStates((prev) => [...prev, payload.new.state_code]);
         })
         .subscribe();
 

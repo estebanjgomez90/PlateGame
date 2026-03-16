@@ -1,11 +1,8 @@
-import { useState } from 'react'
 import MapController from './components/Map'
 import './App.css'
-import SharedSession from './components/SharedSession'
 import { Routes, Route } from 'react-router-dom';
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <>

@@ -1,15 +1,10 @@
-import React, { use, useEffect, useMemo, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom';
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '../dbClient';
 
 const SharedSession = () => {
     // 1. Get the 6-character ID from the URL (e.g., /game/A1B2C3)
-    const { sessionId } = useParams<{ sessionId: string }>();
-
     const [sessionName, setSessionName] = useState("");
-    const [foundStates, setFoundStates] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
     const navigate = useNavigate();
 
@@ -26,7 +21,6 @@ const SharedSession = () => {
                 navigate(`/game/${sessionName}`);
             } else {
                 console.error("Error creating session:", error);
-                setError("Failed to create session. Try a different name.");
             }
         } else {
             navigate(`/game/${sessionName}`);
