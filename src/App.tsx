@@ -20,6 +20,7 @@ function App() {
       <HashRouter>
         <Routes>
           <Route path="*" element={<MapController />} />
+          <Route path="/game/:sessionId" element={<MapController />} />
         </Routes>
       </HashRouter>
     </div>
