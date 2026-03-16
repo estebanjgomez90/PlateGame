@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App'
-// import { HashRouter } from 'react-router-dom';
+import { HashRouter } from 'react-router-dom';
 
 window.onerror = function(message) {
   alert("JS Crash: " + message);
@@ -9,5 +9,7 @@ window.onerror = function(message) {
 };
 
 createRoot(document.getElementById('root')!).render(
+  <HashRouter>
     <App />
+  </HashRouter>
 )
