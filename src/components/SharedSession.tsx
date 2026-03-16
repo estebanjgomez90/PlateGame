@@ -12,19 +12,19 @@ const SharedSession = () => {
         e.preventDefault();
 
         console.log("Form submitted with session ID:", sessionName);
-        // const { error } = await supabase
-        //     .from('GameSession')
-        //     .insert([{ id: sessionName }]);
-        // if (error) {
-        //     if (error.code === '23505') { // Unique violation error code
-        //         console.log("Session name already exists:", sessionName);
-        //         navigate(`/game/${sessionName}`);
-        //     } else {
-        //         console.error("Error creating session:", error);
-        //     }
-        // } else {
-        //     navigate(`/game/${sessionName}`);
-        // }
+        const { error } = await supabase
+            .from('GameSession')
+            .insert([{ id: sessionName }]);
+        if (error) {
+            if (error.code === '23505') { // Unique violation error code
+                console.log("Session name already exists:", sessionName);
+                navigate(`/game/${sessionName}`);
+            } else {
+                console.error("Error creating session:", error);
+            }
+        } else {
+            navigate(`/game/${sessionName}`);
+        }
     }
 
     return (
