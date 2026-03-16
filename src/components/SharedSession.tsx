@@ -11,6 +11,7 @@ const SharedSession = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        setSessionName("TestSession")
         console.log("Form submitted with session ID:", sessionName);
         const { error } = await supabase
             .from('GameSession')
