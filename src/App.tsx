@@ -1,6 +1,6 @@
 import MapController from './components/Map'
 import './App.css'
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, HashRouter } from 'react-router-dom';
 import { useEffect } from 'react'
 
 function App() {
@@ -17,9 +17,11 @@ function App() {
     <main className="flex-1 flex items-center justify-center p-4">
     <div className="map-container w-full h-full">
       {/* MapController is now large and centered */}
-      <Routes>
-        <Route path="*" element={<MapController />} />
-      </Routes>
+      <HashRouter>
+        <Routes>
+          <Route path="*" element={<MapController />} />
+        </Routes>
+      </HashRouter>
     </div>
   </main>
   </div>
