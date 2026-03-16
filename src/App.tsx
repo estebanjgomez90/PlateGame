@@ -1,8 +1,12 @@
 import MapController from './components/Map'
 import './App.css'
 import { Routes, Route } from 'react-router-dom';
+import { useEffect } from 'react'
 
 function App() {
+    useEffect(() => {
+      console.log("App component mounted");
+    }, [])  
 
   return (
     <>
