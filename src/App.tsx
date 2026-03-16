@@ -17,10 +17,7 @@ function App() {
     <main className="flex-1 flex items-center justify-center p-4">
     <div className="map-container w-full h-full">
       {/* MapController is now large and centered */}
-      <Routes>
-        <Route index element={<MapController />} />
-        <Route path="/game/:sessionId" element={<MapController />} />
-      </Routes>
+
     </div>
   </main>
   </div>

@@ -9,7 +9,5 @@ window.onerror = function(message, source, lineno, colno, error) {
 };
 
 createRoot(document.getElementById('root')!).render(
-  <HashRouter>
     <App />
-  </HashRouter>
 )
