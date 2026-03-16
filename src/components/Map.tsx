@@ -18,39 +18,39 @@ const MapController = () => {
       if (!sessionId) return;
 
       const fetchInitialData = async () => {
-        const { data, error } = await supabase
-          .from('FoundStates')
-          .select('state')
-          .eq('sessionID', sessionId)
-        if (error) {
-          console.error("Could not find this game session.");
-        } else if (data) {
-          const flatStates = data.map(item => item.state);
-          console.log("Found states for session", sessionId, ":", flatStates);
-          setSelectedStates(flatStates);
-        } else {
-          setSelectedStates([]);
-        }
+        // const { data, error } = await supabase
+        //   .from('FoundStates')
+        //   .select('state')
+        //   .eq('sessionID', sessionId)
+        // if (error) {
+        //   console.error("Could not find this game session.");
+        // } else if (data) {
+        //   const flatStates = data.map(item => item.state);
+        //   console.log("Found states for session", sessionId, ":", flatStates);
+        //   setSelectedStates(flatStates);
+        // } else {
+        //   setSelectedStates([]);
+        // }
       }
 
       fetchInitialData();
 
-      const channel = supabase
-        .channel(`session-${sessionId}`) // Unique channel name
-        .on('postgres_changes', {
-          event: 'INSERT', // Only listen for new states added
-          schema: 'public',
-          table: 'FoundStates',
-          filter: `sessionID=eq.${sessionId}` // Critical: Only listen for THIS session
-        }, (payload) => {
-          // Update local state without a new DB query! 
-          setSelectedStates((prev) => [...prev, payload.new.state_code]);
-        })
-        .subscribe();
+      // const channel = supabase
+      //   .channel(`session-${sessionId}`) // Unique channel name
+      //   .on('postgres_changes', {
+      //     event: 'INSERT', // Only listen for new states added
+      //     schema: 'public',
+      //     table: 'FoundStates',
+      //     filter: `sessionID=eq.${sessionId}` // Critical: Only listen for THIS session
+      //   }, (payload) => {
+      //     // Update local state without a new DB query! 
+      //     setSelectedStates((prev) => [...prev, payload.new.state_code]);
+      //   })
+      //   .subscribe();
 
       // 3. Cleanup: Close the connection when the component unmounts
       return () => {
-        supabase.removeChannel(channel);
+        // supabase.removeChannel(channel);
       };
 
     };
@@ -62,12 +62,12 @@ const MapController = () => {
     if (!sessionId) return;
 
     console.log("Updating state list for session", sessionId, "with state:", state);
-    const { error } = await supabase
-      .from('FoundStates')
-      .insert([{ sessionID: sessionId, state: state }]);
-    if (error) {
-      console.error("Error updating state list:", error);
-    }
+    // const { error } = await supabase
+    //   .from('FoundStates')
+    //   .insert([{ sessionID: sessionId, state: state }]);
+    // if (error) {
+    //   console.error("Error updating state list:", error);
+    // }
 
     setSelectedStates(prev => prev.includes(state) ? prev : [...prev, state]);
 
