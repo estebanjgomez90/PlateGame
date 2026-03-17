@@ -61,16 +61,31 @@ const MapController = () => {
   const updateStateList = async (state: string) => {
     if (!sessionId) return;
 
-    console.log("Updating state list for session", sessionId, "with state:", state);
-    const { error } = await supabase
-      .from('FoundStates')
-      .insert([{ sessionID: sessionId, state: state }]);
-    if (error) {
-      console.error("Error updating state list:", error);
+    const index = selectedStates.indexOf(state);
+    if (index !== -1) {
+      setSelectedStates(prev => prev.filter(s => s !== state));
+
+      const { error } = await supabase
+        .from('FoundStates')
+        .delete()
+        .eq('sessionID', sessionId)
+        .eq('state', state);
+      if (error) {
+        console.error("Error updating state list:", error);
+      }
+
+      return
+    } else {
+      console.log("Updating state list for session", sessionId, "with state:", state);
+      const { error } = await supabase
+        .from('FoundStates')
+        .insert([{ sessionID: sessionId, state: state }]);
+      if (error) {
+        console.error("Error updating state list:", error);
+      }
+      setSelectedStates(prev => prev.includes(state) ? prev : [...prev, state]);
+      return
     }
-
-    setSelectedStates(prev => prev.includes(state) ? prev : [...prev, state]);
-
   };
 
 
