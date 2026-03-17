@@ -61,7 +61,9 @@ const MapController = () => {
   const updateStateList = async (state: string) => {
     if (!sessionId) return;
 
+    console.log("Updating state list for session", sessionId, "with state:", state);
     const index = selectedStates.indexOf(state);
+    console.log("Current selected states:", selectedStates, "Index of state:", index);
     if (index !== -1) {
       setSelectedStates(prev => prev.filter(s => s !== state));
 
@@ -72,6 +74,8 @@ const MapController = () => {
         .eq('state', state);
       if (error) {
         console.error("Error updating state list:", error);
+      } else {
+        console.log("State removed successfully from session", sessionId, ":", state);
       }
 
       return
