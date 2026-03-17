@@ -19,7 +19,7 @@ function App() {
       {/* MapController is now large and centered */}
       <HashRouter>
         <Routes>
-          {/* <Route path="*" element={<MapController />} /> */}
+          <Route path="*" element={<MapController />} />
           <Route path="/game/:sessionId" element={<MapController />} />
         </Routes>
       </HashRouter>
