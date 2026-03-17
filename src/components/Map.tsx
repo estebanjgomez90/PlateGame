@@ -1,15 +1,21 @@
-import React, { useEffect, useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState, useRef } from 'react'
 import { USAMap, StateAbbreviations } from '@mirawision/usa-map-react'
 import { useParams } from 'react-router-dom';
 import { supabase } from '../dbClient';
 import SharedSession from './SharedSession';
 
+type StateTuple = [string, number];
+
 const MapController = () => {
   const { sessionId } = useParams<{ sessionId: string }>();
   const [hoveredState, setHoveredState] = useState<string | null>(null);
-  const [selectedStates, setSelectedStates] = useState<string[]>([]);
+  const [selectedStates, setSelectedStates] = useState<(StateTuple)[]>([]);
+  const selectedStatesRef = useRef(selectedStates);
   const [inputValue, setInputValue] = useState("");
 
+  useEffect(() => {
+    selectedStatesRef.current = selectedStates;
+  }, [selectedStates]);
 
   useEffect(() => {
     const fetchSessionData = async () => {
@@ -20,12 +26,12 @@ const MapController = () => {
       const fetchInitialData = async () => {
         const { data, error } = await supabase
           .from('FoundStates')
-          .select('state')
+          .select('state, id')
           .eq('sessionID', sessionId)
         if (error) {
           console.error("Could not find this game session.");
         } else if (data) {
-          const flatStates = data.map(item => item.state);
+          const flatStates = data.map((item): StateTuple => [item.state, item.id]);
           console.log("Found states for session", sessionId, ":", flatStates);
           setSelectedStates(flatStates);
         } else {
@@ -33,7 +39,7 @@ const MapController = () => {
         }
       }
 
-      fetchInitialData();
+      await fetchInitialData();
 
       const channel = supabase
         .channel(`session-${sessionId}`) // Unique channel name
@@ -44,9 +50,23 @@ const MapController = () => {
           filter: `sessionID=eq.${sessionId}` // Critical: Only listen for THIS session
         }, (payload) => {
           // Update local state without a new DB query! 
-          setSelectedStates((prev) => [...prev, payload.new.state_code]);
+          console.log("Received real-time INSERT for session", sessionId, ":", payload);
+          const newState: StateTuple = [payload.new.state, payload.new.id];
+          insertLocalStateList(newState);
         })
-        .subscribe();
+        .on('postgres_changes', {
+          event: 'DELETE',
+          schema: 'public',
+          table: 'FoundStates',
+          filter: `sessionID=eq.${sessionId}`
+        }, (payload) => {
+          // Handle deletions from other devices
+          console.log("Received real-time DELETE for session", sessionId, ":", payload);
+          deleteLocalStateList(undefined, payload.old.id);
+        })
+        .subscribe((status) => {
+          console.log("Realtime subscription status:", status);
+        });
 
       // 3. Cleanup: Close the connection when the component unmounts
       return () => {
@@ -58,15 +78,42 @@ const MapController = () => {
     fetchSessionData();
   }, [sessionId]);
 
-  const updateStateList = async (state: string) => {
+  const deleteLocalStateList = (state: string | undefined, id: number | undefined) => {
     if (!sessionId) return;
+    const currentStates = selectedStatesRef.current
+    if (!state && !id) return; // Need at least one identifier to delete
 
-    console.log("Updating state list for session", sessionId, "with state:", state);
-    const index = selectedStates.indexOf(state);
-    console.log("Current selected states:", selectedStates, "Index of state:", index);
-    if (index !== -1) {
-      setSelectedStates(prev => prev.filter(s => s !== state));
+    if (state) {
+      const stateIdx = currentStates.findIndex(([s]) => s === state);
+      if (stateIdx === -1) return // Not present, do nothing
+      setSelectedStates(prev => prev.filter(([s]) => s !== state));
+      return
+    }
 
+    if (id) {
+      const idIdx = currentStates.findIndex(([, sId]) => sId === id);
+      if (idIdx === -1) return // Not present, do nothing
+      setSelectedStates(prev => prev.filter(s => s[1] !== id));
+      return
+    }
+  }
+
+  const insertLocalStateList = (stateTuple: StateTuple) => {
+    if (!sessionId) return;
+    const currentStates = selectedStatesRef.current
+
+    const index = currentStates.findIndex(([s]) => s === stateTuple[0]);
+    if (index !== -1) return // Already present, do nothing
+    setSelectedStates(prev => [...prev, stateTuple]);
+  }
+
+
+  const toggleServerState = async (state: string) => {
+    if (!sessionId) return;
+    const currentStates = selectedStatesRef.current
+    const exists = currentStates.some(([s]) => s === state);
+    if (exists) {
+      // Remove the state from the list
       const { error } = await supabase
         .from('FoundStates')
         .delete()
@@ -75,20 +122,21 @@ const MapController = () => {
       if (error) {
         console.error("Error updating state list:", error);
       } else {
-        console.log("State removed successfully from session", sessionId, ":", state);
+        deleteLocalStateList(state, undefined );
       }
 
-      return
     } else {
-      console.log("Updating state list for session", sessionId, "with state:", state);
-      const { error } = await supabase
+      // Add the state to the list
+      const { data, error } = await supabase
         .from('FoundStates')
-        .insert([{ sessionID: sessionId, state: state }]);
+        .insert([{ sessionID: sessionId, state: state }])
+        .select('state, id')
+        .single();
       if (error) {
         console.error("Error updating state list:", error);
+      } else if (data) {
+        insertLocalStateList([data.state, data.id]);
       }
-      setSelectedStates(prev => prev.includes(state) ? prev : [...prev, state]);
-      return
     }
   };
 
@@ -100,7 +148,7 @@ const MapController = () => {
       let fill = undefined;
       let stroke = undefined;
 
-      if (selectedStates.includes(state)) {
+      if (selectedStates.some(([s]) => s === state)) {
         fill = '#abababff';
         stroke = '#000000ff';
       } else if (hoveredState === state) {
@@ -111,11 +159,11 @@ const MapController = () => {
       settings[state] = {
         fill,
         stroke,
-        onClick: () => updateStateList(state),
+        onClick: () => toggleServerState(state),
         onHover: () => setHoveredState(state),
         onLeave: () => setHoveredState(null),
       };
-    }, [selectedStates]);
+    });
 
     return settings;
   }, [hoveredState, selectedStates]);
@@ -128,7 +176,7 @@ const MapController = () => {
     e.preventDefault();
     console.log("The user guessed:", inputValue);
 
-    updateStateList(inputValue);
+    toggleServerState(inputValue);
 
     // Optional: Clear the input after clicking
     setInputValue("");
